@@ -19,10 +19,18 @@ import java.util.Scanner;
 // Template Method pattern for the synchronization algorithm
 public class SyncEngine {
     private final Profile profile;
+    private final Registry registry;
+    private final String format;
     private final List<SyncObserver> observers = new ArrayList<>();
     
     public SyncEngine(Profile profile) {
+        this(profile, null, "properties");
+    }
+    
+    public SyncEngine(Profile profile, Registry registry, String format) {
         this.profile = profile;
+        this.registry = registry != null ? registry : new Registry();
+        this.format = format;
     }
     
     public void registerObserver(SyncObserver observer) {
@@ -45,7 +53,6 @@ public class SyncEngine {
         FileSystemHandler handlerB = FileSystemFactory.createFileSystemHandler(profile.getPathB());
         
         RegistryManager registryManager = RegistryManager.getInstance();
-        Registry registry = registryManager.loadRegistry(profile);
         
         // Scan both file systems
         FileSystemNode rootA = handlerA.scan();
@@ -143,9 +150,11 @@ public class SyncEngine {
             }
         }
         
-        // Save the updated registry
-        registryManager.saveRegistry(profile, registry);
+        // Save the updated registry with the specified format
+        registryManager.saveRegistry(registry, profile, format);
     }
+    
+    // Rest of the methods remain the same
     
     private Map<String, FileSystemNode> buildFileMap(FileSystemNode node, String path) {
         Map<String, FileSystemNode> map = new HashMap<>();

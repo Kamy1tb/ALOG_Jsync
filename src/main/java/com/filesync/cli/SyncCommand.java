@@ -15,7 +15,7 @@ public class SyncCommand implements Command {
         }
         
         String profileName = args[0];
-        String format = args.length > 1 ? args[1] : "xml"; // Default to properties
+        String format = args.length > 1 ? args[1] : "xml"; // Changed default to xml
         
         ProfileManager profileManager = ProfileManager.getInstance();
         Profile profile = profileManager.loadProfile(profileName);
@@ -27,15 +27,12 @@ public class SyncCommand implements Command {
         RegistryManager registryManager = RegistryManager.getInstance();
         Registry registry = registryManager.loadRegistry(profile, format);
         
-        SyncEngine syncEngine = new SyncEngine(profile);
+        SyncEngine syncEngine = new SyncEngine(profile, registry, format); // Pass registry and format to SyncEngine
         
         // Register observer for console output (Observer pattern)
         syncEngine.registerObserver(new ConsoleSyncObserver());
         
         syncEngine.synchronize();
-        
-        // Save registry in the specified format
-        registryManager.saveRegistry(registry, profile, format);
         
         System.out.println("Synchronization completed for profile '" + profileName + "'.");
     }
