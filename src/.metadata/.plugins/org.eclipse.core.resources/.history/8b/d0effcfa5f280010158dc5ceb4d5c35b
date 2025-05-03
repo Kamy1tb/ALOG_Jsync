@@ -1,0 +1,103 @@
+package com.filesync.core;
+
+import com.filesync.core.registry.JSONRegistryBuilder;
+import com.filesync.core.registry.PropertiesRegistryBuilder;
+import com.filesync.core.registry.RegistryBuilder;
+import com.filesync.core.registry.XMLRegistryBuilder;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Manager for registry operations.
+ * Implements the Singleton pattern.
+ */
+public class RegistryManager {
+    private static RegistryManager instance;
+    private final Map<String, RegistryBuilder> builders = new HashMap<>();
+    
+    private RegistryManager() {
+        // Register default builders
+        registerBuilder("xml", new XMLRegistryBuilder());
+        registerBuilder("json", new JSONRegistryBuilder());
+        registerBuilder("properties", new PropertiesRegistryBuilder());
+    }
+    
+    public static synchronized RegistryManager getInstance() {
+        if (instance == null) {
+            instance = new RegistryManager();
+        }
+        return instance;
+    }
+    
+    /**
+     * Registers a new registry builder for a specific format.
+     * 
+     * @param format Format identifier (e.g., "xml", "json")
+     * @param builder Builder implementation for the format
+     */
+    public void registerBuilder(String format, RegistryBuilder builder) {
+        builders.put(format.toLowerCase(), builder);
+    }
+    
+    /**
+     * Loads a registry using the specified format.
+     * 
+     * @param profile Profile associated with the registry
+     * @param format Format to use (e.g., "xml", "json", "properties")
+     * @return Registry object
+     * @throws IOException If an I/O error occurs
+     * @throws IllegalArgumentException If the format is not supported
+     */
+    public Registry loadRegistry(Profile profile, String format) throws IOException {
+        RegistryBuilder builder = getBuilder(format);
+        String filePath = profile.getName() + "." + format;
+        return builder.buildRegistry(filePath, profile);
+    }
+    
+    /**
+     * Loads a registry using the default format (properties).
+     * 
+     * @param profile Profile associated with the registry
+     * @return Registry object
+     * @throws IOException If an I/O error occurs
+     */
+    public Registry loadRegistry(Profile profile) throws IOException {
+        return loadRegistry(profile, "properties");
+    }
+    
+    /**
+     * Saves a registry using the specified format.
+     * 
+     * @param registry Registry to save
+     * @param profile Profile associated with the registry
+     * @param format Format to use (e.g., "xml", "json", "properties")
+     * @throws IOException If an I/O error occurs
+     * @throws IllegalArgumentException If the format is not supported
+     */
+    public void saveRegistry(Registry registry, Profile profile, String format) throws IOException {
+        RegistryBuilder builder = getBuilder(format);
+        String filePath = profile.getName() + "." + format;
+        builder.saveRegistry(registry, filePath, profile);
+    }
+    
+    /**
+     * Saves a registry using the default format (properties).
+     * 
+     * @param registry Registry to save
+     * @param profile Profile associated with the registry
+     * @throws IOException If an I/O error occurs
+     */
+    public void saveRegistry(Registry registry, Profile profile) throws IOException {
+        saveRegistry(registry, profile, "properties");
+    }
+    
+    private RegistryBuilder getBuilder(String format) {
+        RegistryBuilder builder = builders.get(format.toLowerCase());
+        if (builder == null) {
+            throw new IllegalArgumentException("Unsupported registry format: " + format);
+        }
+        return builder;
+    }
+}
